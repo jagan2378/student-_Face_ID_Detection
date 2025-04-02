@@ -1,0 +1,367 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="landing-container">
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <div class="hero-content">
+                        <h1 class="display-4 fw-bold mb-4">Student ID Monitoring System</h1>
+                        <p class="lead mb-4">Enhance campus security with our advanced facial recognition and ID card detection system. Monitor student compliance with ID policies in real-time.</p>
+                        <div class="hero-buttons">
+                            {% if user.is_authenticated %}
+                                <a href="{% url 'detection' %}" class="btn btn-primary btn-lg me-3">
+                                    <i class="fas fa-video me-2"></i>Go to Dashboard
+                                </a>
+                            {% else %}
+                                <a href="{% url 'login' %}" class="btn btn-primary btn-lg me-3">
+                                    <i class="fas fa-sign-in-alt me-2"></i>Login
+                                </a>
+                                <a href="{% url 'register' %}" class="btn btn-outline-primary btn-lg">
+                                    <i class="fas fa-user-plus me-2"></i>Register
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="hero-image">
+                        <img src="/static/images/Digital-Employee-ID-2.jpg" alt="ID Monitoring System" class="img-fluid rounded shadow-lg">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features-section py-5">
+        <div class="container">
+            <h2 class="text-center mb-5">Key Features</h2>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-camera"></i>
+                        </div>
+                        <h3>Face Recognition</h3>
+                        <p>Advanced facial recognition technology accurately identifies registered students in real-time.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-id-card"></i>
+                        </div>
+                        <h3>ID Card Detection</h3>
+                        <p>Computer vision algorithms detect whether students are properly wearing their ID cards.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-bell"></i>
+                        </div>
+                        <h3>Instant Alerts</h3>
+                        <p>Receive immediate notifications when students are detected without their ID cards.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h3>Detailed Logging</h3>
+                        <p>Comprehensive logs of all detection events with timestamps and images for review.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <h3>Enhanced Security</h3>
+                        <p>Improve campus security by ensuring students are properly identified at all times.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-tachometer-alt"></i>
+                        </div>
+                        <h3>Real-time Monitoring</h3>
+                        <p>Live video feed with instant detection results displayed on an intuitive dashboard.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section class="how-it-works-section py-5 bg-light">
+        <div class="container">
+            <h2 class="text-center mb-5">How It Works</h2>
+            <div class="row">
+                <div class="col-lg-8 mx-auto">
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <div class="timeline-number">1</div>
+                            <div class="timeline-content">
+                                <h4>Registration</h4>
+                                <p>Students register with their personal details, face image, and ID card photo.</p>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-number">2</div>
+                            <div class="timeline-content">
+                                <h4>Face Training</h4>
+                                <p>The system trains its facial recognition model to identify each registered student.</p>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-number">3</div>
+                            <div class="timeline-content">
+                                <h4>Monitoring</h4>
+                                <p>Cameras capture video feeds in designated areas for real-time monitoring.</p>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-number">4</div>
+                            <div class="timeline-content">
+                                <h4>Detection</h4>
+                                <p>The system identifies students and checks if they are wearing their ID cards.</p>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-number">5</div>
+                            <div class="timeline-content">
+                                <h4>Alerts & Logging</h4>
+                                <p>Violations trigger alerts to administrators and all events are logged for review.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Call to Action -->
+    <section class="cta-section py-5">
+        <div class="container">
+            <div class="cta-card">
+                <div class="row align-items-center">
+                    <div class="col-lg-8">
+                        <h2 class="mb-3">Ready to enhance your campus security?</h2>
+                        <p class="lead mb-0">Join our platform today and start monitoring student ID compliance efficiently.</p>
+                    </div>
+                    <div class="col-lg-4 text-lg-end mt-4 mt-lg-0">
+                        {% if user.is_authenticated %}
+                            <a href="{% url 'detection' %}" class="btn btn-primary btn-lg">
+                                <i class="fas fa-video me-2"></i>Go to Dashboard
+                            </a>
+                        {% else %}
+                            <a href="{% url 'register' %}" class="btn btn-primary btn-lg">
+                                <i class="fas fa-user-plus me-2"></i>Get Started
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<style>
+/* Landing Page Styles */
+.landing-container {
+    overflow-x: hidden;
+}
+
+/* Hero Section */
+.hero-section {
+    padding: 100px 0;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+}
+
+.hero-content {
+    animation: fadeInUp 1s ease;
+}
+
+.hero-image {
+    animation: fadeInRight 1s ease;
+    position: relative;
+}
+
+.hero-image img {
+    border-radius: 20px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+}
+
+.hero-buttons {
+    margin-top: 2rem;
+}
+
+/* Features Section */
+.features-section {
+    padding: 80px 0;
+}
+
+.feature-card {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    height: 100%;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.feature-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+}
+
+.feature-icon {
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+    color: #3498db;
+    height: 80px;
+    width: 80px;
+    line-height: 80px;
+    border-radius: 50%;
+    background: rgba(52, 152, 219, 0.1);
+    margin: 0 auto 20px;
+}
+
+/* How It Works Section */
+.how-it-works-section {
+    padding: 80px 0;
+    background-color: #f8f9fa;
+}
+
+.timeline {
+    position: relative;
+    padding: 30px 0;
+}
+
+.timeline:before {
+    content: '';
+    position: absolute;
+    height: 100%;
+    width: 4px;
+    background: #3498db;
+    left: 50px;
+    top: 0;
+}
+
+.timeline-item {
+    margin-bottom: 50px;
+    position: relative;
+    padding-left: 120px;
+}
+
+.timeline-number {
+    position: absolute;
+    left: 30px;
+    width: 40px;
+    height: 40px;
+    background: #3498db;
+    border-radius: 50%;
+    color: white;
+    text-align: center;
+    line-height: 40px;
+    font-weight: bold;
+    z-index: 1;
+}
+
+.timeline-content {
+    background: white;
+    padding: 25px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+}
+
+/* Call to Action Section */
+.cta-section {
+    padding: 80px 0;
+}
+
+.cta-card {
+    background: linear-gradient(135deg, #2c3e50, #3498db);
+    color: white;
+    padding: 50px;
+    border-radius: 20px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+}
+
+/* Animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Responsive Adjustments */
+@media (max-width: 992px) {
+    .hero-section {
+        padding: 60px 0;
+        text-align: center;
+    }
+    
+    .hero-image {
+        margin-top: 40px;
+    }
+    
+    .timeline:before {
+        left: 30px;
+    }
+    
+    .timeline-item {
+        padding-left: 80px;
+    }
+    
+    .timeline-number {
+        left: 10px;
+    }
+    
+    .cta-card {
+        padding: 30px;
+        text-align: center;
+    }
+}
+
+@media (max-width: 576px) {
+    .hero-buttons .btn {
+        display: block;
+        width: 100%;
+        margin-bottom: 10px;
+    }
+    
+    .hero-buttons .btn:last-child {
+        margin-left: 0 !important;
+    }
+    
+    .feature-card {
+        padding: 20px;
+    }
+}
+</style>
+{% endblock %} 

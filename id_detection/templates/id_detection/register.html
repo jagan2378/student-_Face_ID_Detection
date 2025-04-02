@@ -1,0 +1,245 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <div class="auth-icon">
+                <i class="fas fa-user-plus fa-3x mb-3"></i>
+            </div>
+            <h2>Create Account</h2>
+            <p class="text-light">Join our security system</p>
+        </div>
+        <div class="auth-body">
+            <form method="post" enctype="multipart/form-data" class="register-form" id="registerForm">
+                {% csrf_token %}
+                
+                <!-- Username -->
+                <div class="form-group mb-4">
+                    <label class="form-label">Username</label>
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="fas fa-user"></i>
+                        </span>
+                        <input type="text" name="username" class="form-control" placeholder="Enter username" required>
+                    </div>
+                    <small class="form-text">Letters, digits and @/./+/-/_ only</small>
+                </div>
+
+                <!-- Email -->
+                <div class="form-group mb-4">
+                    <label class="form-label">Email Address</label>
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="fas fa-envelope"></i>
+                        </span>
+                        <input type="email" name="email" class="form-control" placeholder="Enter email" required>
+                    </div>
+                </div>
+
+                <!-- Password -->
+                <div class="form-group mb-4">
+                    <label class="form-label">Password</label>
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="fas fa-lock"></i>
+                        </span>
+                        <input type="password" name="password1" class="form-control" placeholder="Create password">
+                    </div>
+                    <div class="password-requirements mt-2">
+                        <small class="d-block mb-1"><i class="fas fa-check-circle text-success me-1"></i> Minimum 8 characters</small>
+                        <small class="d-block mb-1"><i class="fas fa-check-circle text-success me-1"></i> Mix of letters and numbers</small>
+                        <small class="d-block"><i class="fas fa-check-circle text-success me-1"></i> At least one special character</small>
+                    </div>
+                </div>
+
+                <!-- Confirm Password -->
+                <div class="form-group mb-4">
+                    <label class="form-label">Confirm Password</label>
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="fas fa-lock"></i>
+                        </span>
+                        <input type="password" name="password2" class="form-control" placeholder="Confirm password">
+                    </div>
+                </div>
+
+                <!-- Designation -->
+                <div class="form-group mb-4">
+                    <label class="form-label">Designation</label>
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="fas fa-id-badge"></i>
+                        </span>
+                        <input type="text" name="designation" class="form-control" placeholder="Enter your designation" required>
+                    </div>
+                </div>
+
+                <!-- Face Image -->
+                <div class="form-group mb-4">
+                    <label class="form-label">Face Photo</label>
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="fas fa-camera"></i>
+                        </span>
+                        <input type="file" name="face_image" class="form-control" accept="image/*" required>
+                    </div>
+                    <small class="form-text"><i class="fas fa-info-circle me-1"></i> Please look straight at the camera</small>
+                </div>
+
+                <!-- ID Card Image -->
+                <div class="form-group mb-4">
+                    <label class="form-label">ID Card Photo</label>
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="fas fa-id-card"></i>
+                        </span>
+                        <input type="file" name="id_card_image" class="form-control" accept="image/*" required>
+                    </div>
+                    <small class="form-text"><i class="fas fa-info-circle me-1"></i> Provide a clear image of your ID card</small>
+                </div>
+
+                <button type="submit" class="btn btn-auth mb-4">
+                    <i class="fas fa-user-plus me-2"></i>Create Account
+                </button>
+                
+                <div class="text-center">
+                    <p class="mb-2">Already have an account?</p>
+                    <a href="{% url 'login' %}" class="auth-link">
+                        <i class="fas fa-sign-in-alt me-1"></i>Sign in here
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Error Modal -->
+<div class="modal fade" id="errorModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Registration Error
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="errorMessages"></div>
+                <div class="mt-3 small text-muted">
+                    <i class="fas fa-info-circle me-1"></i> Please correct these errors and try again.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('registerForm');
+    const errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
+    const errorMessages = document.getElementById('errorMessages');
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Show loading state
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalBtnText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+        
+        const formData = new FormData(this);
+        
+        fetch('{% url "register" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Reset button state
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnText;
+            
+            if (data.status === 'success') {
+                window.location.href = data.redirect_url;
+            } else {
+                // Clear previous error messages
+                errorMessages.innerHTML = '';
+                
+                // Create a more user-friendly error display
+                const errorList = document.createElement('ul');
+                errorList.className = 'alert alert-danger list-unstyled mb-0';
+                
+                // Process different types of error responses
+                if (typeof data.errors === 'string') {
+                    // Single error message
+                    const errorItem = document.createElement('li');
+                    errorItem.innerHTML = `<i class="fas fa-exclamation-circle me-2"></i>${data.errors}`;
+                    errorList.appendChild(errorItem);
+                } else {
+                    // Multiple field errors
+                    Object.entries(data.errors).forEach(([field, errors]) => {
+                        if (Array.isArray(errors)) {
+                            errors.forEach(error => {
+                                const errorItem = document.createElement('li');
+                                errorItem.className = 'mb-2';
+                                
+                                // Format field name for display
+                                let fieldName = field;
+                                if (field === '__all__') {
+                                    fieldName = 'Validation';
+                                } else if (field === 'password2') {
+                                    fieldName = 'Password Confirmation';
+                                } else {
+                                    // Capitalize first letter
+                                    fieldName = field.charAt(0).toUpperCase() + field.slice(1);
+                                }
+                                
+                                errorItem.innerHTML = `<strong>${fieldName}:</strong> ${error}`;
+                                errorList.appendChild(errorItem);
+                            });
+                        } else if (typeof errors === 'string') {
+                            // Handle case where errors is a string
+                            const errorItem = document.createElement('li');
+                            errorItem.className = 'mb-2';
+                            
+                            let fieldName = field;
+                            if (field === '__all__') {
+                                fieldName = 'Validation';
+                            } else {
+                                // Capitalize first letter
+                                fieldName = field.charAt(0).toUpperCase() + field.slice(1);
+                            }
+                            
+                            errorItem.innerHTML = `<strong>${fieldName}:</strong> ${errors}`;
+                            errorList.appendChild(errorItem);
+                        }
+                    });
+                }
+                
+                errorMessages.appendChild(errorList);
+                errorModal.show();
+            }
+        })
+        .catch(error => {
+            // Reset button state
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnText;
+            
+            errorMessages.innerHTML = '<div class="alert alert-danger">An unexpected error occurred. Please try again.</div>';
+            errorModal.show();
+        });
+    });
+});
+</script>
+{% endblock %} 

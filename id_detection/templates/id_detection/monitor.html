@@ -1,0 +1,279 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="main-container">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-md-8">
+                <div class="video-feed">
+                    <h2 class="mb-4">Live Detection</h2>
+                    <div class="video-container">
+                        <canvas id="displayCanvas" width="640" height="360" class="w-100 rounded"></canvas>
+                        <video id="video" width="640" height="360" autoplay playsinline style="display: none;"></video>
+                        <canvas id="canvas" width="640" height="360" style="display: none;"></canvas>
+                    </div>
+                    <div class="mt-3">
+                        <button id="startScan" class="btn btn-auth">
+                            <i class="fas fa-camera me-2"></i>Start Scan
+                        </button>
+                        <button id="stopScan" class="btn btn-danger" style="display: none;">
+                            <i class="fas fa-stop me-2"></i>Stop Scan
+                        </button>
+                    </div>
+                    <div id="detectionStatus" class="mt-2"></div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="detection-logs">
+                    <h3 class="mb-3">Detection Status</h3>
+                    <div class="current-user-status mb-4">
+                        <h5>Current User</h5>
+                        <div class="card">
+                            <div class="card-body">
+                                <h6 class="mb-2">{{ user.username }}</h6>
+                                <p class="mb-1"><i class="fas fa-id-badge me-2"></i>{{ user.person.designation }}</p>
+                                <div id="currentStatus" class="alert alert-info mt-2 mb-0">
+                                    Waiting for detection...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="recent-detections">
+                        <h5>Recent Detections</h5>
+                        <div id="logs" class="list-group detection-list">
+                            {% for log in detection_logs %}
+                            <div class="detection-item mb-2">
+                                <div class="alert {% if log.wearing_id %}alert-success{% else %}alert-danger{% endif %}">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">{{ log.person.user.username }}</h6>
+                                            <small class="text-muted">{{ log.timestamp|date:"g:i A" }}</small>
+                                        </div>
+                                        <span class="badge {% if log.wearing_id %}bg-success{% else %}bg-danger{% endif %}">
+                                            {% if log.wearing_id %}ID Card OK{% else %}No ID Card{% endif %}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% csrf_token %}
+<script>
+const VIDEO_WIDTH = 640;
+const VIDEO_HEIGHT = 360;
+const video = document.getElementById('video');
+const canvas = document.getElementById('canvas');
+const displayCanvas = document.getElementById('displayCanvas');
+const context = canvas.getContext('2d');
+const displayContext = displayCanvas.getContext('2d');
+const startButton = document.getElementById('startScan');
+const stopButton = document.getElementById('stopScan');
+const statusDiv = document.getElementById('detectionStatus');
+const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+const FRAME_INTERVAL = 200; // Increased interval for more stable detection
+
+let isScanning = false;
+let lastProcessTime = 0;
+
+function startCamera() {
+    updateStatus('Starting camera...');
+    navigator.mediaDevices.getUserMedia({
+        video: {
+            width: { ideal: VIDEO_WIDTH },
+            height: { ideal: VIDEO_HEIGHT },
+            facingMode: 'user'
+        }
+    })
+    .then(stream => {
+        video.srcObject = stream;
+        return video.play(); // Return the promise from play()
+    })
+    .then(() => {
+        updateStatus('Camera active - Monitoring for faces and ID cards');
+        isScanning = true;
+        processFrame();
+    })
+    .catch(err => {
+        console.error("Error accessing camera:", err);
+        updateStatus('Error: Could not access camera', true);
+        isScanning = false;
+        startButton.style.display = 'inline-block';
+        stopButton.style.display = 'none';
+    });
+}
+
+function processFrame() {
+    if (!isScanning) return;
+    
+    const now = Date.now();
+    if (now - lastProcessTime < FRAME_INTERVAL) {
+        requestAnimationFrame(processFrame);
+        return;
+    }
+    
+    lastProcessTime = now;
+    
+    // Draw video to canvas
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    // Get canvas data as blob
+    canvas.toBlob(function(blob) {
+        const formData = new FormData();
+        formData.append('image', blob, 'frame.jpg');
+        
+        fetch('{% url "detect" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': csrftoken
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // Display the processed frame
+                const img = new Image();
+                img.onload = function() {
+                    displayContext.clearRect(0, 0, displayCanvas.width, displayCanvas.height);
+                    displayContext.drawImage(img, 0, 0, displayCanvas.width, displayCanvas.height);
+                };
+                img.src = data.frame;
+                
+                // Update detection logs if there are detections
+                if (data.detections && data.detections.length > 0) {
+                    data.detections.forEach(detection => {
+                        updateDetectionLog(detection);
+                    });
+                }
+            } else {
+                console.error('Error:', data.message);
+                updateStatus('Detection error: ' + data.message, true);
+            }
+            
+            if (isScanning) {
+                requestAnimationFrame(processFrame);
+            }
+        })
+        .catch(error => {
+            console.error('Fetch error:', error);
+            updateStatus('Connection error. Retrying...', true);
+            
+            if (isScanning) {
+                setTimeout(() => requestAnimationFrame(processFrame), 2000);
+            }
+        });
+    }, 'image/jpeg', 0.8);
+}
+
+startButton.addEventListener('click', () => {
+    startButton.style.display = 'none';
+    stopButton.style.display = 'inline-block';
+    startCamera();
+});
+
+stopButton.addEventListener('click', () => {
+    isScanning = false;
+    stopButton.style.display = 'none';
+    startButton.style.display = 'inline-block';
+    stopCamera();
+    updateStatus('Detection stopped');
+    
+    const logsDiv = document.getElementById('logs');
+    logsDiv.innerHTML = `
+        <div class="alert alert-info">
+            Click Start Scan to begin monitoring.
+        </div>
+    `;
+});
+
+function updateStatus(message, isError = false) {
+    statusDiv.innerHTML = `
+        <div class="alert alert-${isError ? 'danger' : 'info'}">
+            ${message}
+        </div>
+    `;
+}
+
+function stopCamera() {
+    const stream = video.srcObject;
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+    }
+    video.srcObject = null;
+    // Clear the display canvas
+    displayContext.clearRect(0, 0, displayCanvas.width, displayCanvas.height);
+}
+
+function updateDetectionLog(detection) {
+    const logsDiv = document.getElementById('logs');
+    const currentStatus = document.getElementById('currentStatus');
+    
+    // Update current status
+    currentStatus.className = `alert ${detection.wearing_id ? 'alert-success' : 'alert-danger'} mt-2 mb-0`;
+    currentStatus.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <strong>Status:</strong> ${detection.wearing_id ? 'ID Card Verified' : 'ID Card Missing'}
+            </div>
+            <div>
+                <i class="fas ${detection.wearing_id ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
+            </div>
+        </div>
+    `;
+    
+    // Add new detection log
+    const logItem = document.createElement('div');
+    logItem.className = 'detection-item mb-2';
+    
+    const now = new Date().toLocaleTimeString();
+    
+    logItem.innerHTML = `
+        <div class="alert ${detection.wearing_id ? 'alert-success' : 'alert-danger'}">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="mb-1">${detection.person_name}</h6>
+                    <small class="text-muted">${now}</small>
+                </div>
+                <span class="badge ${detection.wearing_id ? 'bg-success' : 'bg-danger'}">
+                    ${detection.wearing_id ? 'ID Card OK' : 'No ID Card'}
+                </span>
+            </div>
+        </div>
+    `;
+    
+    // Keep only the last 5 detections
+    while (logsDiv.children.length >= 5) {
+        logsDiv.removeChild(logsDiv.lastChild);
+    }
+    logsDiv.insertBefore(logItem, logsDiv.firstChild);
+}
+</script>
+
+<style>
+.detection-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.detection-item .alert {
+    margin-bottom: 0;
+    padding: 0.75rem;
+}
+
+.current-user-status .card {
+    border: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.badge {
+    padding: 0.5em 0.8em;
+}
+</style>
+{% endblock %} 
